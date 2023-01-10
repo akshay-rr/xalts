@@ -36,6 +36,9 @@ contract XaltsToken is ERC20PresetFixedSupply, Ownable {
     }
 
     function whiteListAddress(address _whiteListedAddress) public onlyOwner {
+
+        require(!whiteList[_whiteListedAddress], "Already whitelisted");
+
         whiteList[_whiteListedAddress] = true;
         emit WhiteListed(_whiteListedAddress);
 
@@ -48,6 +51,9 @@ contract XaltsToken is ERC20PresetFixedSupply, Ownable {
     }
 
     function blackListAddress(address _blackListedAddress) public onlyOwner {
+
+        require(whiteList[_blackListedAddress], "Already blackListed");
+
         whiteList[_blackListedAddress] = false;
         emit BlackListed(_blackListedAddress);
 
