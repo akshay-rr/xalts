@@ -12,6 +12,10 @@ contract XaltsToken is ERC20PresetFixedSupply, Ownable {
 
     mapping(address => mapping(address => bool)) associated;
 
+    mapping(address => uint256) blackListedNeighboursCount;
+
+    mapping(address => bool) directBlacklisted;
+
     mapping(address => address[]) associates;
 
     mapping(address => bool) saleContracts;
@@ -40,26 +44,36 @@ contract XaltsToken is ERC20PresetFixedSupply, Ownable {
         require(!whiteList[_whiteListedAddress], "Already whitelisted");
 
         whiteList[_whiteListedAddress] = true;
+        directBlacklisted[_whiteListedAddress] = false;
+
         emit WhiteListed(_whiteListedAddress);
 
         address[] memory associatedAddresses = associates[_whiteListedAddress];
 
         for(uint i = 0; i < associatedAddresses.length; i++) {
-            whiteList[associatedAddresses[i]] = true;
-            emit WhiteListed(associatedAddresses[i]);
+            
+            blackListedNeighboursCount[associatedAddresses[i]]--;
+
+            if (blackListedNeighboursCount[associatedAddresses[i]] == 0 && !directBlacklisted[associatedAddresses[i]]) {
+                whiteList[associatedAddresses[i]] = true;
+                emit WhiteListed(associatedAddresses[i]);
+            }
         }
     }
 
     function blackListAddress(address _blackListedAddress) public onlyOwner {
 
-        require(whiteList[_blackListedAddress], "Already blackListed");
+        require(whiteList[_blackListedAddress] && !directBlacklisted[_blackListedAddress], "Already blackListed");
 
         whiteList[_blackListedAddress] = false;
+        directBlacklisted[_blackListedAddress] = true;
+
         emit BlackListed(_blackListedAddress);
 
         address[] memory associatedAddresses = associates[_blackListedAddress];
 
         for(uint i = 0; i < associatedAddresses.length; i++) {
+            blackListedNeighboursCount[associatedAddresses[i]]++;
             whiteList[associatedAddresses[i]] = false;
             emit BlackListed(associatedAddresses[i]);
         }
